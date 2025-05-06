@@ -436,7 +436,6 @@ const MainFeature = () => {
                       height: `calc((100% / ${gameSettings.gridSize}) - 1.2rem)`,
                       zIndex: 10
                     }}
-                    }}
                   ></div>
               }
               return null;
