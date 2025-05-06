@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import getIcon from '../utils/iconUtils';
@@ -25,6 +25,10 @@ const MainFeature = () => {
     boxes: {},
     gameOver: false
   });
+  
+  // Drag state
+  const [startDot, setStartDot] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   
   // Settings modal
   const [showSettings, setShowSettings] = useState(false);
@@ -226,6 +230,56 @@ const MainFeature = () => {
     });
     toast.info("Game reset! Starting a new game.");
   };
+  // Drag and drop functionality
+  const handleDotMouseDown = (dot) => {
+    if (gameState.gameOver) return;
+    setStartDot(dot);
+    setIsDragging(true);
+  };
+  
+  const handleDotMouseEnter = (dot) => {
+    if (!isDragging || !startDot || gameState.gameOver) return;
+    
+    // Check if this is a valid move (adjacent dots)
+    const isHorizontalAdjacent = startDot.y === dot.y && Math.abs(startDot.x - dot.x) === 1;
+    const isVerticalAdjacent = startDot.x === dot.x && Math.abs(startDot.y - dot.y) === 1;
+    
+    if (isHorizontalAdjacent || isVerticalAdjacent) {
+      // Check if line already exists
+      const lineExists = gameState.lines.has(`${startDot.x},${startDot.y}-${dot.x},${dot.y}`) ||
+                        gameState.lines.has(`${dot.x},${dot.y}-${startDot.x},${startDot.y}`);
+      
+      if (!lineExists) {
+        handleLineClick(startDot, dot);
+      }
+      
+      // Reset drag state
+      setStartDot(null);
+      setIsDragging(false);
+    }
+  };
+  
+  const handleDotMouseUp = (dot) => {
+    if (!isDragging || !startDot || gameState.gameOver) return;
+    
+    // Check if this is a valid move (adjacent dots)
+    const isHorizontalAdjacent = startDot.y === dot.y && Math.abs(startDot.x - dot.x) === 1;
+    const isVerticalAdjacent = startDot.x === dot.x && Math.abs(startDot.y - dot.y) === 1;
+    
+    if (isHorizontalAdjacent || isVerticalAdjacent && startDot !== dot) {
+      handleDotMouseEnter(dot);
+    }
+    
+    // Reset drag state
+    setStartDot(null);
+    setIsDragging(false);
+  };
+  
+  const handleBoardMouseUp = () => {
+    setIsDragging(false);
+    setStartDot(null);
+  };
+  
   
   // Handle settings form submission
   const handleSettingsSubmit = (e) => {
@@ -235,13 +289,31 @@ const MainFeature = () => {
     toast.success("Game settings updated!");
   };
   
-  // Render dot
+  // Render dot with interactive capabilities
   const renderDot = (dot) => (
     <div 
       key={`dot-${dot.x}-${dot.y}`}
-      className="game-dot"
+      className={`w-4 h-4 rounded-full bg-surface-700 dark:bg-surface-300 shadow-md transition-transform z-20 relative
+                 ${isDragging && startDot && startDot.x === dot.x && startDot.y === dot.y ? 'scale-125 bg-primary dark:bg-primary' : ''}
+                 ${isDragging ? 'cursor-pointer hover:scale-110' : 'hover:scale-110'}`}
+      style={{
+        gridColumn: dot.x + 1,
+        gridRow: dot.y + 1,
+      }}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        handleDotMouseDown(dot);
+      }}
+      onMouseEnter={() => handleDotMouseEnter(dot)}
+      onMouseUp={() => handleDotMouseUp(dot)}
+      onTouchStart={() => handleDotMouseDown(dot)}
+      onTouchMove={(e) => {
+        // Touch handling logic can be expanded here if needed
+      }}
+      onTouchEnd={() => handleDotMouseUp(dot)}
     />
   );
+
   
   // Render box
   const renderBox = (x, y) => {
@@ -304,10 +376,12 @@ const MainFeature = () => {
           
           {/* Game Grid */}
           <div 
-            className="relative grid gap-4 mb-4"
+            className="relative grid gap-6 mb-4"
             style={{
               gridTemplateColumns: `repeat(${gameSettings.gridSize}, 1fr)`,
-              width: `min(100%, ${gameSettings.gridSize * 3}rem)`
+              width: `min(100%, ${gameSettings.gridSize * 3.5}rem)`
+            onMouseUp={handleBoardMouseUp}
+            onTouchEnd={handleBoardMouseUp}
             }}
           >
             {/* Render dots */}
@@ -324,14 +398,16 @@ const MainFeature = () => {
                   <div
                     key={`h-line-${dot.x}-${dot.y}`}
                     className={`absolute game-line-horizontal cursor-pointer ${
-                      lineExists ? 'bg-primary dark:bg-primary' : 'bg-transparent hover:bg-surface-300/50 dark:hover:bg-surface-600/50'
+                      lineExists ? 'bg-primary dark:bg-primary' : 'bg-transparent hover:bg-surface-300/80 dark:hover:bg-surface-600/80'
                     }`}
                     style={{
                       left: `calc(${dot.x * 100 / (gameSettings.gridSize - 1)}% + 0.625rem)`,
                       top: `calc(${dot.y * 100 / (gameSettings.gridSize - 1)}% + 0.625rem)`,
-                      width: `calc(100% / ${gameSettings.gridSize - 1} - 1.25rem)`
+                      width: `calc(100% / ${gameSettings.gridSize - 1} - 1.25rem)`,
+                      height: '0.25rem',
+                      zIndex: 10
                     }}
-                    onClick={() => {
+                    onClick={(e) => {
                       if (!lineExists && !gameState.gameOver) {
                         handleLineClick(dot, rightDot);
                       }
@@ -353,14 +429,16 @@ const MainFeature = () => {
                   <div
                     key={`v-line-${dot.x}-${dot.y}`}
                     className={`absolute game-line-vertical cursor-pointer ${
-                      lineExists ? 'bg-primary dark:bg-primary' : 'bg-transparent hover:bg-surface-300/50 dark:hover:bg-surface-600/50'
+                      lineExists ? 'bg-primary dark:bg-primary' : 'bg-transparent hover:bg-surface-300/80 dark:hover:bg-surface-600/80'
                     }`}
                     style={{
                       left: `calc(${dot.x * 100 / (gameSettings.gridSize - 1)}% + 0.625rem)`,
                       top: `calc(${dot.y * 100 / (gameSettings.gridSize - 1)}% + 0.625rem)`,
-                      height: `calc(100% / ${gameSettings.gridSize - 1} - 1.25rem)`
+                      height: `calc(100% / ${gameSettings.gridSize - 1} - 1.25rem)`,
+                      width: '0.25rem',
+                      zIndex: 10
                     }}
-                    onClick={() => {
+                    onClick={(e) => {
                       if (!lineExists && !gameState.gameOver) {
                         handleLineClick(dot, bottomDot);
                       }
@@ -468,8 +546,9 @@ const MainFeature = () => {
             <ul className="text-sm space-y-2 text-surface-700 dark:text-surface-300">
               <li>• Take turns connecting adjacent dots with lines</li>
               <li>• When you complete a box, you claim it and get another turn</li>
-              <li>• The player with the most boxes at the end wins</li>
-              <li>• Current player is highlighted above the board</li>
+              <li>• Drag from dot to dot or click on lines to connect</li>
+              <li>• The player with the most boxes wins</li>
+              <li>• Current player's score is highlighted</li>
             </ul>
           </div>
         </motion.div>
