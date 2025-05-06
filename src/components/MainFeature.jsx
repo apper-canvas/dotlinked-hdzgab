@@ -293,11 +293,9 @@ const MainFeature = () => {
   const renderDot = (dot) => (
     <div 
       key={`dot-${dot.x}-${dot.y}`}
-      className={`game-dot w-5 h-5 absolute rounded-full bg-surface-700 dark:bg-surface-300 shadow-md transition-transform z-20
+      className={`game-dot absolute rounded-full bg-surface-700 dark:bg-surface-300 shadow-md transition-transform z-20
                  ${isDragging && startDot && startDot.x === dot.x && startDot.y === dot.y ? 'scale-125 bg-primary dark:bg-primary' : ''}
                  ${isDragging ? 'cursor-pointer hover:scale-110' : 'hover:scale-110'}`}
-      onMouseDown={(e) => {
-        e.preventDefault();
       style={{
         gridColumn: dot.x + 1,
         gridRow: dot.y + 1,
@@ -306,12 +304,9 @@ const MainFeature = () => {
         e.preventDefault();
         handleDotMouseDown(dot);
       }}
-      onMouseEnter={() => handleDotMouseEnter(dot)}
-      onMouseUp={() => handleDotMouseUp(dot)}
-      onTouchStart={() => handleDotMouseDown(dot)}
-      onTouchMove={(e) => {
-        // Touch handling logic can be expanded here if needed
-      }}
+      onMouseEnter={() => handleDotMouseEnter(dot)} 
+      onMouseUp={() => handleDotMouseUp(dot)} 
+      onTouchStart={() => handleDotMouseDown(dot)} 
       onTouchEnd={() => handleDotMouseUp(dot)}
     />
   );
@@ -433,18 +428,13 @@ const MainFeature = () => {
                   <div
                     key={`v-line-${dot.x}-${dot.y}`}
                     className={`absolute game-line-vertical cursor-pointer ${
-                    className={`absolute game-line-vertical w-1.5 cursor-pointer ${
                       lineExists ? 'bg-primary dark:bg-primary' : 'bg-transparent hover:bg-surface-300 dark:hover:bg-surface-600'
+                    }`}
                     style={{
-                      left: `calc(${dot.x * 100 / (gameSettings.gridSize - 1)}% + 0.625rem)`,
                       left: `calc(${dot.x + 1} * (100% / ${gameSettings.gridSize}))`,
                       top: `calc(${dot.y + 1} * (100% / ${gameSettings.gridSize}) + 0.6rem)`,
                       height: `calc((100% / ${gameSettings.gridSize}) - 1.2rem)`,
-                    }}
-                    onClick={(e) => {
-                    onClick={() => {
-                        handleLineClick(dot, bottomDot);
-                      }
+                      zIndex: 10
                     }}
                     }}
                   ></div>
