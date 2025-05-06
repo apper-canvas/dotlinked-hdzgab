@@ -293,9 +293,11 @@ const MainFeature = () => {
   const renderDot = (dot) => (
     <div 
       key={`dot-${dot.x}-${dot.y}`}
-      className={`w-4 h-4 rounded-full bg-surface-700 dark:bg-surface-300 shadow-md transition-transform z-20 relative
+      className={`game-dot w-5 h-5 absolute rounded-full bg-surface-700 dark:bg-surface-300 shadow-md transition-transform z-20
                  ${isDragging && startDot && startDot.x === dot.x && startDot.y === dot.y ? 'scale-125 bg-primary dark:bg-primary' : ''}
                  ${isDragging ? 'cursor-pointer hover:scale-110' : 'hover:scale-110'}`}
+      onMouseDown={(e) => {
+        e.preventDefault();
       style={{
         gridColumn: dot.x + 1,
         gridRow: dot.y + 1,
@@ -378,12 +380,14 @@ const MainFeature = () => {
           <div 
             className="relative grid gap-6 mb-4"
             style={{
-              gridTemplateColumns: `repeat(${gameSettings.gridSize}, 1fr)`,
-              width: `min(100%, ${gameSettings.gridSize * 3.5}rem)`
+              display: 'grid',
+              gridTemplateColumns: `repeat(${gameSettings.gridSize}, minmax(40px, 1fr))`,
+              gridTemplateRows: `repeat(${gameSettings.gridSize}, minmax(40px, 1fr))`,
+              gap: '1.5rem',
+              width: `min(100%, ${gameSettings.gridSize * 4}rem)`,
+              height: `min(100%, ${gameSettings.gridSize * 4}rem)`,
+              position: 'relative'
             }}
-            onMouseUp={handleBoardMouseUp}
-            onTouchEnd={handleBoardMouseUp}
-            
           >
             {/* Render dots */}
             {dots.map(dot => renderDot(dot))}
@@ -398,22 +402,21 @@ const MainFeature = () => {
                 return (
                   <div
                     key={`h-line-${dot.x}-${dot.y}`}
-                    className={`absolute game-line-horizontal cursor-pointer ${
-                      lineExists ? 'bg-primary dark:bg-primary' : 'bg-transparent hover:bg-surface-300/80 dark:hover:bg-surface-600/80'
+                    className={`absolute game-line-horizontal h-1.5 cursor-pointer ${
+                      lineExists ? 'bg-primary dark:bg-primary' : 'bg-transparent hover:bg-surface-300 dark:hover:bg-surface-600'
                     }`}
                     style={{
-                      left: `calc(${dot.x * 100 / (gameSettings.gridSize - 1)}% + 0.625rem)`,
-                      top: `calc(${dot.y * 100 / (gameSettings.gridSize - 1)}% + 0.625rem)`,
-                      width: `calc(100% / ${gameSettings.gridSize - 1} - 1.25rem)`,
-                      height: '0.25rem',
+                      left: `calc(${dot.x + 1} * (100% / ${gameSettings.gridSize}) + 0.6rem)`,
+                      top: `calc(${dot.y + 1} * (100% / ${gameSettings.gridSize}))`,
+                      width: `calc((100% / ${gameSettings.gridSize}) - 1.2rem)`,
                       zIndex: 10
                     }}
-                    onClick={(e) => {
+                    onClick={() => {
                       if (!lineExists && !gameState.gameOver) {
                         handleLineClick(dot, rightDot);
                       }
                     }}
-                  />
+                  ></div>
                 );
               }
               return null;
@@ -430,22 +433,21 @@ const MainFeature = () => {
                   <div
                     key={`v-line-${dot.x}-${dot.y}`}
                     className={`absolute game-line-vertical cursor-pointer ${
-                      lineExists ? 'bg-primary dark:bg-primary' : 'bg-transparent hover:bg-surface-300/80 dark:hover:bg-surface-600/80'
-                    }`}
+                    className={`absolute game-line-vertical w-1.5 cursor-pointer ${
+                      lineExists ? 'bg-primary dark:bg-primary' : 'bg-transparent hover:bg-surface-300 dark:hover:bg-surface-600'
                     style={{
                       left: `calc(${dot.x * 100 / (gameSettings.gridSize - 1)}% + 0.625rem)`,
-                      top: `calc(${dot.y * 100 / (gameSettings.gridSize - 1)}% + 0.625rem)`,
-                      height: `calc(100% / ${gameSettings.gridSize - 1} - 1.25rem)`,
-                      width: '0.25rem',
-                      zIndex: 10
+                      left: `calc(${dot.x + 1} * (100% / ${gameSettings.gridSize}))`,
+                      top: `calc(${dot.y + 1} * (100% / ${gameSettings.gridSize}) + 0.6rem)`,
+                      height: `calc((100% / ${gameSettings.gridSize}) - 1.2rem)`,
                     }}
                     onClick={(e) => {
-                      if (!lineExists && !gameState.gameOver) {
+                    onClick={() => {
                         handleLineClick(dot, bottomDot);
                       }
                     }}
-                  />
-                );
+                    }}
+                  ></div>
               }
               return null;
             })}
@@ -458,10 +460,10 @@ const MainFeature = () => {
                     key={`box-${dot.x}-${dot.y}`}
                     className="absolute"
                     style={{
-                      left: `calc(${dot.x * 100 / (gameSettings.gridSize - 1)}% + 0.625rem)`,
-                      top: `calc(${dot.y * 100 / (gameSettings.gridSize - 1)}% + 0.625rem)`,
-                      width: `calc(100% / ${gameSettings.gridSize - 1} - 1.25rem)`,
-                      height: `calc(100% / ${gameSettings.gridSize - 1} - 1.25rem)`
+                      left: `calc(${dot.x + 1} * (100% / ${gameSettings.gridSize}) + 0.6rem)`,
+                      top: `calc(${dot.y + 1} * (100% / ${gameSettings.gridSize}) + 0.6rem)`,
+                      width: `calc((100% / ${gameSettings.gridSize}) - 1.2rem)`,
+                      height: `calc((100% / ${gameSettings.gridSize}) - 1.2rem)`
                     }}
                   >
                     {renderBox(dot.x, dot.y)}
@@ -471,6 +473,13 @@ const MainFeature = () => {
               return null;
             })}
           </div>
+          
+          {/* Touch/Mouse event catchers - placed outside the grid for better UX */}
+          <div 
+            className="absolute inset-0 z-0"
+            onMouseUp={handleBoardMouseUp}
+            onTouchEnd={handleBoardMouseUp}
+          />
           
           {/* Game Controls */}
           <div className="w-full flex flex-col sm:flex-row gap-3 mt-4">
