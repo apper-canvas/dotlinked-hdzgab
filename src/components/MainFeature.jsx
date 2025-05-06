@@ -380,9 +380,10 @@ const MainFeature = () => {
             style={{
               gridTemplateColumns: `repeat(${gameSettings.gridSize}, 1fr)`,
               width: `min(100%, ${gameSettings.gridSize * 3.5}rem)`
+            }}
             onMouseUp={handleBoardMouseUp}
             onTouchEnd={handleBoardMouseUp}
-            }}
+            
           >
             {/* Render dots */}
             {dots.map(dot => renderDot(dot))}
