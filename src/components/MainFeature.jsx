@@ -437,7 +437,7 @@ const MainFeature = () => {
                       zIndex: 10
                     }}
                   ></div>
-              }
+                      if (!lineExists && !gameState.gameOver) {
               return null;
             })}
             
